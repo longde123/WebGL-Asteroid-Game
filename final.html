@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+<head>
+<script type="text/javascript" src="planet.js"></script>
+<script type="text/javascript" src="asteroid.js"></script>
+<script type="text/javascript" src="time.js"></script>
+<script type="text/javascript" src="collsionDetection.js"></script>
+<script type="text/javascript" src="particles.js"></script>
+<script type="text/javascript" src="final.js"></script>
+<script type="text/javascript" src="initShaders.js"></script>
+<script type="text/javascript" src="webgl-utils.js"></script>
+<script type="text/javascript" src="MV.js"></script>
+<script id="shader-vs" type="x-shader/x-vertex">
+    attribute vec4 aPosition;
+    attribute vec2 aTexCoord;
+    attribute vec3 aNormal;
+
+    // Attributes needed for particle system
+    attribute vec4 aPartOffset;
+    attribute vec4 aPartColor;
+    attribute float aPartScale;
+    attribute float aPartRand;
+
+    varying vec2 vTexCoord;
+    varying vec4 vLightWeighting;
+
+    // Varying-type variables needed for particle system
+    varying vec4 vPartColor;
+
+    uniform vec4 uAmbientColor;
+
+    uniform vec4 uPLLocation;
+    uniform vec4 uPLSpecular;
+    uniform vec4 uPLDiffuse;
+    
+    // Needed for cube-mapping
+    varying vec3 vNormal;
+
+    uniform float uShine;
+
+    uniform mat4 uMVMatrix;
+    uniform mat4 uPMatrix;
+    uniform mat3 uNMatrix;
+
+    uniform mediump int uRenderType;
+    // 0 : Normal model
+    // 1 : Particle
+    // 2 : Background
+
+    vec3 randDistort(float seed) {
+        return vec3(fract(sin(seed) * 43758.5453) - 0.5,
+                    fract(sin(seed) * 123.5811) - 0.5,
+                    fract(sin(seed) * 8998152.1132) - 0.5);
+    }
+
+    void main(void) {
+        if (uRenderType == 0 || uRenderType == 3) {
+            // lighting calculations
+            // vertex position in eye coordinates
+            vec3 pos = (uMVMatrix * aPosition).xyz;
+            // vertex to light
+            vec3 L = normalize(uPLLocation.xyz - pos);
+            // vertex to eye
+            vec3 E = -normalize(pos);
+            // halfway vector
+            vec3 H = normalize(L + E);
+            // vertex normal in eye coordinates
+//            vec3 N = normalize(uNMatrix * aNormal.xyz);
+            vec3 N = normalize(vec3(uMVMatrix * vec4(aNormal.xyz, 0.0)));
+
+            // computation for diffuse color
+            float Kd = max(dot(L, N), 0.0);
+            vec4 diffuse = Kd * uPLDiffuse;
+
+            // computation for specular color
+            float Ks = pow(max(dot(N, H), 0.0), uShine);
+            vec4 specular = Ks * uPLSpecular;
+            if (dot(L, N) < 0.0) {
+                specular = vec4(0.0, 0.0, 0.0, 1.0);
+            }
+            vLightWeighting = uAmbientColor + diffuse + specular;
+            vLightWeighting.a = 1.0;
+            vTexCoord = aTexCoord;
+            gl_Position = uPMatrix * uMVMatrix * aPosition;
+            vNormal = aNormal.xyz;
+        }
+        else if (uRenderType == 1) {
+              vec4 scaledPos = vec4(aPartScale * (aPosition.xyz + 0.1 * randDistort(aPartRand + aPosition.x)), 1.0);
+              vec4 worldPos = scaledPos + vec4(aPartOffset.xyz, 0.0);
+              gl_Position = uPMatrix * worldPos;
+              gl_PointSize = aPartScale;
+              vPartColor = aPartColor;
+        }
+        else if (uRenderType == 2) {
+             gl_Position = vec4(aPosition.x, aPosition.y, 0.999999, 1.0);
+             vTexCoord = aTexCoord;
+        }
+        else if (uRenderType == 4){ // if (uRenderType == 4)
+             gl_Position = vec4(aPosition.x, aPosition.y, -0.999999, 1.0);
+             vPartColor = uAmbientColor;
+        }
+        else { //if (uRenderType == 5){
+             gl_Position = vec4(aPosition.x, aPosition.y, -0.999999, 1.0);
+             vTexCoord = aTexCoord;
+        }
+    }
+</script>
+
+<script id="shader-fs" type="x-shader/x-fragment">
+    precision mediump float;
+
+    varying vec2 vTexCoord;
+    varying vec4 vLightWeighting;
+
+    varying vec4 vPartColor;
+
+    varying vec3 vNormal;
+
+    uniform sampler2D uSampler;
+    uniform mediump int uRenderType;
+
+    uniform samplerCube uSamplerCube;
+
+    void main(void) {
+        if (uRenderType == 0) {
+            vec4 fragmentColor = texture2D(uSampler, vec2(vTexCoord.s, vTexCoord.t));
+            gl_FragColor = fragmentColor * vLightWeighting;
+        }
+        else if (uRenderType == 1)
+            gl_FragColor = vPartColor;
+        else if (uRenderType == 2)
+            gl_FragColor = texture2D(uSampler, vTexCoord) * vec4(0.5, 0.5, 0.5, 1.0);
+        else if (uRenderType == 4)
+            gl_FragColor = vPartColor;
+        else // if (uRenderType == 5)
+            gl_FragColor = texture2D(uSampler, vTexCoord);
+    }
+</script>
+<script id="shader-fs-cube" type="x-shader/x-fragment">
+    precision mediump float;
+
+    varying vec2 vTexCoord;
+    varying vec4 vLightWeighting;
+
+    varying vec4 vPartColor;
+
+    varying vec3 vNormal;
+
+    uniform sampler2D uSampler;
+    uniform mediump int uRenderType;
+
+    uniform samplerCube uSamplerCube;
+
+    void main(void) {
+      vec4 fragmentColor = textureCube(uSamplerCube, vNormal);
+      gl_FragColor = fragmentColor * vLightWeighting;
+    }
+</script>
+</head>
+
+<body>
+    <canvas id="gl-canvas" width="960" height="540"></canvas>
+</body>
+
+</html>
