@@ -532,6 +532,7 @@ var flashEnable = false;
 var flashTimer = 0.0;
 var maxFlashTimer = 0.25;
 var gameOverTimer = 0.0;
+var victoryTimer = 0.0;
 
 function resetPlayer() {
     xPos = -1.5;
@@ -549,7 +550,8 @@ function resetPlayer() {
     flashEnable = false;
     flashTimer = 0.0;
     gameOverTimer = 0.0;
-    planets[0].scale = 5.0;
+	victoryTimer = 0.0;
+    planets[0].scale = 40.0;
     timeSinceLastMissile = 2.5;
     asteroids = [];
 }
@@ -558,7 +560,7 @@ function resetPlayer() {
 var fovy = 45.0;
 //var near = 0.1;
 var near = 1;
-var far = 300.0;
+var far = 350.0;
 
 var lightPosition = [20.0, 10.0, -30.0, 1.0];
 var missilePosx;
@@ -820,7 +822,8 @@ function handleKeys() {
     }
     if (currentlyPressedKeys[32]) {
         if (curState == GameState.TITLE
-           || curState == GameState.VICTORY
+           || (curState == GameState.VICTORY
+		      && victoryTimer <= 0)
            || (curState == GameState.DEATH
               && gameOverTimer <= 0))
         {
@@ -869,11 +872,17 @@ function animate(timestamp) {
 
         totalTime += elapsed;
 
-        if (planets[0].scale >= 45)
+        if (planets[0].scale >= 150 && curState != GameState.VICTORY)
+		{
             curState = GameState.VICTORY;
+			victoryTimer = 2.0;
+		}
 
         if (gameOverTimer > 0)
             gameOverTimer -= elapsed;
+			
+		if (victoryTimer > 0)
+			victoryTimer -= elapsed;
 
         // need to check each asteroid and see if thezre is a collision with the ship and the asteroid.
         if (curState == GameState.GAME && health > 0 && !isInvulnerable) {
@@ -893,6 +902,7 @@ function animate(timestamp) {
                             deathSound.play();
                             makeExplosion(spaceship_pos[0], spaceship_pos[1], spaceship_pos[2], 10, 300);
                             curState = GameState.DEATH;
+							gameOverTimer = 2.0;
                         }
                         else {
                             hitSound.currenttime = 0;

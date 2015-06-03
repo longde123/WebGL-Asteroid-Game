@@ -109,9 +109,9 @@ var planets = [];
 function makePlanet()
 {
     var planet = new Planet();
-    planet.pos = [0, 0, -220.0];
+    planet.pos = [0, 0, -350.0];
     planet.vel = [0,0,0];
-    planet.scale = 5;
+    planet.scale = 40;
     planet.rotPos = Math.random() * 360.0;
     planet.rotSpeed = 20;
     planet.rotAxis = [0, 1.0, 0];
@@ -171,7 +171,7 @@ function drawPlanet()
     
     var i = 0;
     if(curState == GameState.GAME)
-        planets[i].scale += .01;
+        planets[i].scale += .026;
     mvMatrix = scale(planets[i].scale, planets[i].scale, planets[i].scale);
     mvMatrix = mult(rotate(planets[i].rotPos, planets[i].rotAxis[0],
                                             planets[i].rotAxis[1],

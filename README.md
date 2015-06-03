@@ -2,7 +2,7 @@
 
 ### Setup Instructions
 
-Please load `final.html` from the `master-working` branch. Aside from the standard WebGL implementation, your browser will also need to support the ANGLE extensions to WebGL.
+Please load `final.html` from the `master-working` branch. The commit should be tagged v1.1. Aside from the standard WebGL implementation, your browser will also need to support the ANGLE extensions to WebGL.
 
 ### How to Play
 
