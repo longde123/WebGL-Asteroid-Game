@@ -1,4 +1,4 @@
-# CS174A - Team 11 Term Project: Escape to Planet Friedman
+# Escape to Planet Friedman
 
 ### Setup Instructions
 
