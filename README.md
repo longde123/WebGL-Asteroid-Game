@@ -1,4 +1,4 @@
-# Escape to Planet Friedman
+# Asteroids
 
 ### Setup Instructions
 
